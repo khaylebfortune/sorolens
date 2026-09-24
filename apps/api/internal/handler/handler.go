@@ -52,4 +52,5 @@ type Handler struct {
 	// Cold is optional; when set, event queries fall back to object storage for
 	// ledger ranges that are no longer in Postgres.
 	Cold ColdEventReader
+	StreamHub   *StreamHub
 }
