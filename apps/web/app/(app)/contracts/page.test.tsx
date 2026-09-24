@@ -17,14 +17,18 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mock next/link ──────────────────────────────────────────────────────────
+// Props other than href (id, className, …) are forwarded, so tests can still
+// target elements by id now that the track button is a Link.
 vi.mock("next/link", () => ({
   default: ({
     children,
     href,
-  }: {
-    children: React.ReactNode;
-    href: string;
-  }) => <a href={href}>{children}</a>,
+    ...rest
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
 }));
 
 // ── Mock @sorolens/ui so we don't need the built dist ───────────────────────
@@ -224,123 +228,32 @@ describe("ContractsPage", () => {
     ).toBeDefined();
   });
 
-  // ── Happy path: track contract modal open/close ────────────────────────────
+  // ── Track contract entry point (wizard, issue #140) ────────────────────────
 
-  it("opens Track contract modal when the button is clicked", async () => {
+  it("links the Track contract button to the wizard route", async () => {
     await renderPage();
     await waitFor(() => screen.getByTestId("data-table"));
 
-    fireEvent.click(document.getElementById("track-contract-btn")!);
-    expect(screen.getByRole("dialog")).toBeDefined();
-    expect(screen.getByLabelText(/contract id/i)).toBeDefined();
+    const btn = document.getElementById("track-contract-btn");
+    expect(btn).not.toBeNull();
+    expect(btn?.getAttribute("href")).toBe("/contracts/new");
+    // The single-field modal is gone: nothing is a dialog any more.
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("closes the modal when Escape key is pressed", async () => {
-    await renderPage();
-    await waitFor(() => screen.getByTestId("data-table"));
-
-    fireEvent.click(document.getElementById("track-contract-btn")!);
-    expect(screen.getByRole("dialog")).toBeDefined();
-
-    fireEvent.keyDown(window, { key: "Escape" });
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog")).toBeNull(),
-    );
-  });
-
-  // ── Validation: invalid contract ID is rejected ────────────────────────────
-
-  it("shows validation error for invalid contract ID format", async () => {
-    await renderPage();
-    await waitFor(() => screen.getByTestId("data-table"));
-
-    fireEvent.click(document.getElementById("track-contract-btn")!);
-
-    const input = screen.getByLabelText(/contract id/i);
-    fireEvent.change(input, { target: { value: "NOT_A_VALID_ID" } });
-
-    expect(
-      screen.getByText(/contract id must be 56 characters/i),
-    ).toBeDefined();
-  });
-
-  it("NEGATIVE: submit button is disabled when contract ID is invalid", async () => {
-    await renderPage();
-    await waitFor(() => screen.getByTestId("data-table"));
-
-    fireEvent.click(document.getElementById("track-contract-btn")!);
-
-    const input = screen.getByLabelText(/contract id/i);
-    fireEvent.change(input, { target: { value: "BAD" } });
-
-    const submitEl = document.getElementById("track-modal-submit") as HTMLButtonElement;
-    expect(submitEl?.disabled).toBe(true);
-  });
-
-  // ── Happy path: successful track contract submission ───────────────────────
-
-  it("calls trackContract and refreshes on valid submission", async () => {
-    mockTrackContract.mockResolvedValue({
-      id: VALID_CONTRACT_ID,
-      label: "New Contract",
-      status: "backfilling",
-      network: "testnet",
-      wasm_hash: null,
-      added_at: "2024-03-01T00:00:00Z",
+  it("links the empty-state prompt to the wizard route", async () => {
+    mockListContracts.mockResolvedValue({
+      contracts: [],
+      cursor: null,
+      has_more: false,
     });
-
     await renderPage();
-    await waitFor(() => screen.getByTestId("data-table"));
-
-    fireEvent.click(document.getElementById("track-contract-btn")!);
-
-    const input = screen.getByLabelText(/contract id/i);
-    fireEvent.change(input, { target: { value: VALID_CONTRACT_ID } });
-
-    const submitEl = document.getElementById("track-modal-submit") as HTMLButtonElement;
-    fireEvent.submit(submitEl.closest("form")!);
-
     await waitFor(() =>
-      expect(mockTrackContract).toHaveBeenCalledWith(
-        {
-          id: VALID_CONTRACT_ID,
-          label: undefined,
-        },
-        "",
-      ),
-    );
-    // Modal closes after success
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog")).toBeNull(),
-    );
-    // listContracts was called again to refresh
-    expect(mockListContracts).toHaveBeenCalledTimes(2);
-  });
-
-  // ── Negative: API error shown in modal ────────────────────────────────────
-
-  it("NEGATIVE: shows API error message in modal when trackContract fails", async () => {
-    const { ApiError } = await import("@/lib/api");
-    mockTrackContract.mockRejectedValue(
-      new ApiError(409, "Contract already tracked"),
+      expect(screen.queryByTestId("table-skeleton")).toBeNull(),
     );
 
-    await renderPage();
-    await waitFor(() => screen.getByTestId("data-table"));
-
-    fireEvent.click(document.getElementById("track-contract-btn")!);
-
-    const input = screen.getByLabelText(/contract id/i);
-    fireEvent.change(input, { target: { value: VALID_CONTRACT_ID } });
-
-    const submitEl = document.getElementById("track-modal-submit") as HTMLButtonElement;
-    fireEvent.submit(submitEl.closest("form")!);
-
-    await waitFor(() =>
-      expect(screen.getByText(/contract already tracked/i)).toBeDefined(),
-    );
-    // Modal stays open
-    expect(screen.getByRole("dialog")).toBeDefined();
+    const link = screen.getByText(/run the tracking wizard/i);
+    expect(link.getAttribute("href")).toBe("/contracts/new");
   });
 
   // ── Pagination: prev disabled on first page ────────────────────────────────

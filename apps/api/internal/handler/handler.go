@@ -12,6 +12,8 @@ import (
 type APIStore interface {
 	store.Store
 	store.QueryStore
+	store.LiveStore
+	store.ArchiveStore
 	store.WatchdogStore
 	store.ContractUpgradeStore
 	store.HealthScoreStore
@@ -32,6 +34,14 @@ type RedisClient interface {
 	Expire(ctx context.Context, key string, expiration time.Duration) (bool, error)
 }
 
+// ColdEventReader serves events that have been archived out of Postgres into
+// cold storage (issue #146). It is satisfied by *coldstorage.Reader. A nil
+// Cold disables the fallback, which is the default for local development and
+// for deployments that have not configured a cold bucket.
+type ColdEventReader interface {
+	Events(ctx context.Context, contractID string, from, to uint32, limit int) ([]store.Event, error)
+}
+
 // Handler holds shared dependencies for all HTTP handlers.
 type Handler struct {
 	Store       APIStore
@@ -39,4 +49,7 @@ type Handler struct {
 	Redis       Pinger
 	RedisClient RedisClient
 	Logger      *slog.Logger
+	// Cold is optional; when set, event queries fall back to object storage for
+	// ledger ranges that are no longer in Postgres.
+	Cold ColdEventReader
 }

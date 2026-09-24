@@ -7,6 +7,12 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: false,
+    // Unit tests live next to the code they cover (*.test.tsx). The Playwright
+    // specs under tests/e2e are run by `pnpm test:e2e`, not vitest; without this
+    // exclude vitest's default spec glob picks them up and errors with
+    // "Playwright Test did not expect test() to be called here".
+    include: ["**/*.test.{ts,tsx}"],
+    exclude: ["**/node_modules/**", "**/.next/**", "tests/e2e/**"],
   },
   resolve: {
     alias: {

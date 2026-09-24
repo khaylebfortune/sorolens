@@ -4,36 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { DataTable, MonoId } from "@sorolens/ui";
 import type { Column } from "@sorolens/ui";
-import { listContracts, trackContract, ApiError } from "@/lib/api";
+import { listContracts } from "@/lib/api";
 import type { ContractSummary } from "@/lib/types";
 import { networkFilter, useNetwork } from "@/lib/network";
 import { TableSkeleton } from "@/components/Skeleton";
-
-// RBAC identity: same localStorage key the watchlist page uses, so the UI
-// registers a contract under the same user identity. Must map to a user
-// granted at least the contributor role in the API's users table.
-const STORAGE_KEY = "sorolens_user_id";
-
-function getUserId(): string {
-  if (typeof window === "undefined") return "";
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) || "";
-  } catch {
-    // localStorage can be unavailable (private mode, some test runners);
-    // RBAC still allows registered-contract calls for anonymous callers as
-    // reads remain open.
-    return "";
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const PAGE_SIZE = 20;
-
-// Soroban contract IDs are 56-char strkeys starting with 'C'
-const CONTRACT_ID_RE = /^C[A-Z0-9]{55}$/;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -62,173 +42,6 @@ function formatDate(iso: string) {
     month: "short",
     day: "numeric",
   });
-}
-
-// ---------------------------------------------------------------------------
-// Track Contract Modal
-// ---------------------------------------------------------------------------
-
-interface TrackModalProps {
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-function TrackContractModal({ onClose, onSuccess }: TrackModalProps) {
-  const [contractId, setContractId] = useState("");
-  const [label, setLabel] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  const idError =
-    contractId.length > 0 && !CONTRACT_ID_RE.test(contractId)
-      ? "Contract ID must be 56 characters starting with 'C' (A–Z, 0–9 only)"
-      : null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (idError || !contractId) return;
-
-    setSubmitting(true);
-    setError(null);
-    try {
-      await trackContract(
-        { id: contractId, label: label || undefined },
-        getUserId(),
-      );
-      onSuccess();
-      onClose();
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("An unexpected error occurred");
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Close on backdrop click
-  const backdropRef = useRef<HTMLDivElement>(null);
-  const handleBackdrop = (e: React.MouseEvent) => {
-    if (e.target === backdropRef.current) onClose();
-  };
-
-  // Close on Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
-
-  return (
-    <div
-      ref={backdropRef}
-      onClick={handleBackdrop}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      aria-modal="true"
-      role="dialog"
-      aria-labelledby="track-modal-title"
-    >
-      <div className="w-full max-w-md rounded-xl bg-[var(--color-bg-card)] p-6 shadow-2xl border border-[var(--color-border)]">
-        <div className="mb-5 flex items-center justify-between">
-          <h2
-            id="track-modal-title"
-            className="text-lg font-semibold text-[var(--color-text-primary)]"
-          >
-            Track a Contract
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          <div>
-            <label
-              htmlFor="track-contract-id"
-              className="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]"
-            >
-              Contract ID <span className="text-red-400">*</span>
-            </label>
-            <input
-              id="track-contract-id"
-              type="text"
-              value={contractId}
-              onChange={(e) => {
-                setContractId(e.target.value.trim());
-                setError(null);
-              }}
-              placeholder="C…"
-              className="w-full rounded-lg border border-[var(--color-border)] bg-black/30 px-3 py-2.5 font-mono text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] focus:border-[var(--color-accent)] focus:outline-none"
-              autoComplete="off"
-              spellCheck={false}
-              required
-            />
-            {idError && (
-              <p className="mt-1.5 text-xs text-red-400" role="alert">
-                {idError}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
-              htmlFor="track-contract-label"
-              className="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]"
-            >
-              Alias / Label{" "}
-              <span className="text-[var(--color-text-secondary)] font-normal">
-                (optional)
-              </span>
-            </label>
-            <input
-              id="track-contract-label"
-              type="text"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="My Contract"
-              className="w-full rounded-lg border border-[var(--color-border)] bg-black/30 px-3 py-2.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] focus:border-[var(--color-accent)] focus:outline-none"
-            />
-          </div>
-
-          {error && (
-            <p
-              className="rounded-lg bg-red-900/20 border border-red-900/40 px-3 py-2.5 text-sm text-red-400"
-              role="alert"
-            >
-              {error}
-            </p>
-          )}
-
-          <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-lg border border-[var(--color-border)] px-4 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              id="track-modal-submit"
-              type="submit"
-              disabled={submitting || !!idError || !contractId}
-              className="flex-1 rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--color-bg-page)] transition-opacity disabled:opacity-50 hover:opacity-90"
-            >
-              {submitting ? "Tracking…" : "Track contract"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -308,9 +121,6 @@ export default function ContractsPage() {
   // Sort state
   const [sortColumn, setSortColumn] = useState<string>("added_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-
-  // Modal state
-  const [showModal, setShowModal] = useState(false);
 
   // ---------------------------------------------------------------------------
   // Data fetching
@@ -408,27 +218,11 @@ export default function ContractsPage() {
   const isLastPage = !hasMore;
 
   // ---------------------------------------------------------------------------
-  // Track success: refresh first page
-  // ---------------------------------------------------------------------------
-
-  const handleTrackSuccess = () => {
-    setCursors([null]);
-    setCursorIndex(0);
-  };
-
-  // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
   return (
     <>
-      {showModal && (
-        <TrackContractModal
-          onClose={() => setShowModal(false)}
-          onSuccess={handleTrackSuccess}
-        />
-      )}
-
       <div>
         {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -436,15 +230,16 @@ export default function ContractsPage() {
             Contracts
           </h1>
 
-          <button
+          {/* The tracking wizard (issue #140) replaced the old single-field
+              modal, so this is a route, not a dialog trigger. */}
+          <Link
             id="track-contract-btn"
-            type="button"
-            onClick={() => setShowModal(true)}
+            href="/contracts/new"
             className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-bg-page)] transition-opacity hover:opacity-90"
           >
             <span aria-hidden="true">+</span>
             Track contract
-          </button>
+          </Link>
         </div>
 
         {/* Search */}
@@ -471,14 +266,13 @@ export default function ContractsPage() {
             </p>
             {!search && (
               <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-                Use the CLI or API to start tracking a Soroban contract, or click{" "}
-                <button
-                  type="button"
-                  onClick={() => setShowModal(true)}
+                Use the CLI or API to start tracking a Soroban contract, or{" "}
+                <Link
+                  href="/contracts/new"
                   className="text-[var(--color-accent)] underline underline-offset-2 hover:opacity-80"
                 >
-                  Track contract
-                </button>{" "}
+                  run the tracking wizard
+                </Link>{" "}
                 to add one from here.
               </p>
             )}

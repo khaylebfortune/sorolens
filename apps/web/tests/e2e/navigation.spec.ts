@@ -8,6 +8,7 @@ test("navigation links reach the /contracts and /watchdog routes", async ({
   await page.goto("/contracts");
 
   const nav = page.locator("nav");
+  await expect(nav).toContainText("Live");
   await expect(nav).toContainText("Contracts");
   await expect(nav).toContainText("Watchdog");
   await expect(nav).toContainText("Playground");
