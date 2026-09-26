@@ -5,6 +5,7 @@ from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+from typing_extensions import Self
 
 from ..types import UNSET, Unset
 
@@ -58,7 +59,7 @@ class Error:
 
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.error_error_type_0 import ErrorErrorType0 # noqa: PLC0415
         from ..models.error_error_type_1 import ErrorErrorType1 # noqa: PLC0415
         d = dict(src_dict)

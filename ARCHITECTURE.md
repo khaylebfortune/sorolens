@@ -634,7 +634,6 @@ Revoke a key. Returns `204`.
 ---
 
 ### 4.7 Stats
-### 4.5 Stats
 
 #### `GET /api/v1/stats/global`
 
@@ -658,9 +657,25 @@ Network-wide summary across all tracked contracts.
 
 ---
 
+### 4.8 Request timeouts
+
+Every `/api/v1` route runs under `API_REQUEST_TIMEOUT` (default 30s,
+`middleware.Timeout`, built on `http.TimeoutHandler`). The request context is
+cancelled at the deadline so in-flight store queries abort, and a handler that
+has not finished gets a `503` with the standard error envelope
+(`code: TIMEOUT`). The response is buffered, so late writes from a slow handler
+are discarded instead of racing the 503.
+
+`GET /api/v1/stream/events` (SSE) is registered outside that cap and runs
+under `API_STREAM_TIMEOUT` (default 5m, `middleware.StreamTimeout`): the
+response is not buffered, the connection write deadline is extended to match,
+and at the deadline the context is cancelled so the stream closes and
+`EventSource` reconnects. The server `WriteTimeout` is set to
+`API_REQUEST_TIMEOUT + 5s` so it never cuts off the 503.
+
 ---
 
-### 4.8 Live dashboard feeds
+### 4.9 Live dashboard feeds
 
 The `/live` page (issue #139) polls two bounded, non-paginated reads.
 
@@ -690,7 +705,7 @@ It never writes.
 
 ---
 
-### 4.9 API v2
+### 4.10 API v2
 
 `/api/v2/*` mirrors `/api/v1/*` route for route with a consistent response
 contract:

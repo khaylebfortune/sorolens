@@ -5,6 +5,7 @@ from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+from typing_extensions import Self
 
 from ..types import UNSET, Unset
 
@@ -83,7 +84,7 @@ class ContractSnapshot:
 
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.event import Event # noqa: PLC0415
         from ..models.storage_entry import StorageEntry # noqa: PLC0415
         d = dict(src_dict)
