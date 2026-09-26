@@ -1,4 +1,4 @@
-""" Contains all the data models used in inputs/outputs """
+"""Contains all the data models used in inputs/outputs"""
 
 from .add_to_watchlist_body import AddToWatchlistBody
 from .alert_group import AlertGroup
@@ -12,7 +12,9 @@ from .api_health_response_200_redis import ApiHealthResponse200Redis
 from .api_key import APIKey
 from .build_info import BuildInfo
 from .compare_contract_entry import CompareContractEntry
-from .compare_contract_entry_event_volume_item import CompareContractEntryEventVolumeItem
+from .compare_contract_entry_event_volume_item import (
+    CompareContractEntryEventVolumeItem,
+)
 from .compare_contracts_window import CompareContractsWindow
 from .compare_response import CompareResponse
 from .compare_response_window import CompareResponseWindow
@@ -34,7 +36,9 @@ from .contract_upgrade import ContractUpgrade
 from .contract_validation_result import ContractValidationResult
 from .create_alert_subscription import CreateAlertSubscription
 from .create_alert_subscription_channel_type import CreateAlertSubscriptionChannelType
-from .create_alert_subscription_severity_filter import CreateAlertSubscriptionSeverityFilter
+from .create_alert_subscription_severity_filter import (
+    CreateAlertSubscriptionSeverityFilter,
+)
 from .create_api_key_admin_body import CreateApiKeyAdminBody
 from .create_api_key_admin_response_201 import CreateApiKeyAdminResponse201
 from .create_api_key_body import CreateApiKeyBody
@@ -53,7 +57,9 @@ from .forecast_series_metric import ForecastSeriesMetric
 from .get_api_v1_search_response_200 import GetApiV1SearchResponse200
 from .get_contract_forecast_response_200 import GetContractForecastResponse200
 from .get_contract_report_format import GetContractReportFormat
-from .get_contract_report_history_response_200 import GetContractReportHistoryResponse200
+from .get_contract_report_history_response_200 import (
+    GetContractReportHistoryResponse200,
+)
 from .get_contract_uptime_window import GetContractUptimeWindow
 from .get_global_stats_response_200 import GetGlobalStatsResponse200
 from .get_watchdog_stats_network import GetWatchdogStatsNetwork
@@ -81,7 +87,9 @@ from .list_contract_alerts_response_200 import ListContractAlertsResponse200
 from .list_contract_alerts_severity import ListContractAlertsSeverity
 from .list_contract_events_network import ListContractEventsNetwork
 from .list_contract_events_response_200 import ListContractEventsResponse200
-from .list_contract_health_checks_response_200 import ListContractHealthChecksResponse200
+from .list_contract_health_checks_response_200 import (
+    ListContractHealthChecksResponse200,
+)
 from .list_contract_invocations_network import ListContractInvocationsNetwork
 from .list_contract_invocations_response_200 import ListContractInvocationsResponse200
 from .list_contract_invocations_status import ListContractInvocationsStatus
