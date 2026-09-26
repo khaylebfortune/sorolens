@@ -46,7 +46,8 @@ vi.mock("@/lib/api", () => ({
 
 import LivePage from "./page";
 
-const CONTRACT_ID = "CAVRQGH5C3VRQGH5C3VRQGH5C3VRQGH5C3VRQGH5C3VRQGH5C3VRQGH5C33";
+const CONTRACT_ID =
+  "CAVRQGH5C3VRQGH5C3VRQGH5C3VRQGH5C3VRQGH5C3VRQGH5C3VRQGH5C33";
 
 function liveEvent(id: string) {
   return {
@@ -92,7 +93,11 @@ const webkitExitFullscreen = vi.fn(async () => {});
 let fullscreenElement: Element | null = null;
 
 function defineProp(target: object, key: string, value: unknown) {
-  Object.defineProperty(target, key, { configurable: true, writable: true, value });
+  Object.defineProperty(target, key, {
+    configurable: true,
+    writable: true,
+    value,
+  });
 }
 
 beforeEach(() => {
@@ -108,7 +113,11 @@ beforeEach(() => {
   fullscreenElement = null;
 
   defineProp(HTMLElement.prototype, "requestFullscreen", requestFullscreen);
-  defineProp(HTMLElement.prototype, "webkitRequestFullscreen", webkitRequestFullscreen);
+  defineProp(
+    HTMLElement.prototype,
+    "webkitRequestFullscreen",
+    webkitRequestFullscreen
+  );
   defineProp(document, "exitFullscreen", exitFullscreen);
   defineProp(document, "webkitExitFullscreen", webkitExitFullscreen);
   Object.defineProperty(document, "fullscreenElement", {
@@ -142,7 +151,7 @@ describe("LivePage", () => {
   it("keeps the sparkline mounted so it repaints instead of flickering", async () => {
     render(<LivePage />);
     await waitFor(() =>
-      expect(screen.getAllByTestId("hot-contract-sparkline")).toHaveLength(1),
+      expect(screen.getAllByTestId("hot-contract-sparkline")).toHaveLength(1)
     );
 
     const before = screen.getAllByTestId("hot-contract-sparkline")[0];
@@ -151,7 +160,9 @@ describe("LivePage", () => {
     // A manual refresh re-fetches but must not unmount the chart: the same DOM
     // node is still in place, which is what avoids a full re-render flicker.
     fireEvent.click(screen.getByTestId("live-refresh"));
-    await waitFor(() => expect(mockGetLiveActivity.mock.calls.length).toBeGreaterThan(1));
+    await waitFor(() =>
+      expect(mockGetLiveActivity.mock.calls.length).toBeGreaterThan(1)
+    );
 
     const after = screen.getAllByTestId("hot-contract-sparkline")[0];
     expect(after).toBe(before);
@@ -161,7 +172,9 @@ describe("LivePage", () => {
     mockGetRecentEvents.mockResolvedValue({ events: [] });
     render(<LivePage />);
 
-    await waitFor(() => expect(screen.getByTestId("ticker-empty")).toBeDefined());
+    await waitFor(() =>
+      expect(screen.getByTestId("ticker-empty")).toBeDefined()
+    );
   });
 
   it("surfaces an error banner when the feed fails", async () => {
@@ -198,7 +211,7 @@ describe("LivePage", () => {
     });
 
     expect(screen.getByTestId("fullscreen-toggle").textContent).toBe(
-      "Exit fullscreen",
+      "Exit fullscreen"
     );
 
     await act(async () => {
@@ -259,8 +272,8 @@ describe("LivePage", () => {
 
     await waitFor(() =>
       expect(screen.getByTestId("live-error").textContent).toContain(
-        "does not support fullscreen",
-      ),
+        "does not support fullscreen"
+      )
     );
   });
 });

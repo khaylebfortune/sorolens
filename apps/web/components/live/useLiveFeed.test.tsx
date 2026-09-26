@@ -92,7 +92,7 @@ describe("useLiveFeed", () => {
     render(<Harness />);
 
     await waitFor(() =>
-      expect(screen.getByTestId("ids").textContent).toBe("evt_1"),
+      expect(screen.getByTestId("ids").textContent).toBe("evt_1")
     );
     expect(screen.getByTestId("totals").textContent).toBe("CA:1");
     expect(screen.getByTestId("loading").textContent).toBe("false");
@@ -101,12 +101,12 @@ describe("useLiveFeed", () => {
   it("polls again without the caller doing anything", async () => {
     render(<Harness />);
     await waitFor(() =>
-      expect(screen.getByTestId("ids").textContent).toBe("evt_1"),
+      expect(screen.getByTestId("ids").textContent).toBe("evt_1")
     );
 
     await waitFor(
       () => expect(mockGetRecentEvents.mock.calls.length).toBeGreaterThan(1),
-      { timeout: 2000 },
+      { timeout: 2000 }
     );
   });
 
@@ -117,12 +117,12 @@ describe("useLiveFeed", () => {
 
     render(<Harness />);
     await waitFor(() =>
-      expect(screen.getByTestId("ids").textContent).toBe("evt_1"),
+      expect(screen.getByTestId("ids").textContent).toBe("evt_1")
     );
 
     await waitFor(
       () => expect(screen.getByTestId("ids").textContent).toBe("evt_2,evt_1"),
-      { timeout: 2000 },
+      { timeout: 2000 }
     );
   });
 
@@ -133,13 +133,13 @@ describe("useLiveFeed", () => {
 
     render(<Harness />);
     await waitFor(() =>
-      expect(screen.getByTestId("ids").textContent).toBe("evt_1"),
+      expect(screen.getByTestId("ids").textContent).toBe("evt_1")
     );
 
     // Several polls have happened by now; the list must still hold one row.
     await waitFor(
       () => expect(mockGetRecentEvents.mock.calls.length).toBeGreaterThan(2),
-      { timeout: 2000 },
+      { timeout: 2000 }
     );
     expect(screen.getByTestId("ids").textContent).toBe("evt_1");
   });
@@ -147,15 +147,15 @@ describe("useLiveFeed", () => {
   it("caps the list at TICKER_SIZE", async () => {
     mockGetRecentEvents.mockResolvedValue({
       events: Array.from({ length: TICKER_SIZE + 20 }, (_, i) =>
-        event(`evt_${String(i).padStart(3, "0")}`, i),
+        event(`evt_${String(i).padStart(3, "0")}`, i)
       ),
     });
 
     render(<Harness />);
     await waitFor(() =>
       expect(screen.getByTestId("ids").textContent.split(",").length).toBe(
-        TICKER_SIZE,
-      ),
+        TICKER_SIZE
+      )
     );
   });
 
@@ -166,14 +166,17 @@ describe("useLiveFeed", () => {
 
     render(<Harness />);
     await waitFor(() =>
-      expect(screen.getByTestId("ids").textContent).toBe("evt_1"),
+      expect(screen.getByTestId("ids").textContent).toBe("evt_1")
     );
     // The first load is not "new" — nothing is highlighted on mount.
     expect(screen.getByTestId("new").textContent).toBe("");
 
-    await waitFor(() => expect(screen.getByTestId("new").textContent).toBe("evt_2"), {
-      timeout: 2000,
-    });
+    await waitFor(
+      () => expect(screen.getByTestId("new").textContent).toBe("evt_2"),
+      {
+        timeout: 2000,
+      }
+    );
   });
 
   it("keeps the last good data and reports the error when a poll fails", async () => {
@@ -183,12 +186,13 @@ describe("useLiveFeed", () => {
 
     render(<Harness />);
     await waitFor(() =>
-      expect(screen.getByTestId("ids").textContent).toBe("evt_1"),
+      expect(screen.getByTestId("ids").textContent).toBe("evt_1")
     );
 
     await waitFor(
-      () => expect(screen.getByTestId("error").textContent).toBe("upstream down"),
-      { timeout: 2000 },
+      () =>
+        expect(screen.getByTestId("error").textContent).toBe("upstream down"),
+      { timeout: 2000 }
     );
     // The row survives: a wall display should go stale, not blank.
     expect(screen.getByTestId("ids").textContent).toBe("evt_1");
@@ -197,7 +201,7 @@ describe("useLiveFeed", () => {
   it("does not poll while the document is hidden", async () => {
     render(<Harness />);
     await waitFor(() =>
-      expect(screen.getByTestId("ids").textContent).toBe("evt_1"),
+      expect(screen.getByTestId("ids").textContent).toBe("evt_1")
     );
 
     Object.defineProperty(document, "visibilityState", {

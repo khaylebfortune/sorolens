@@ -778,11 +778,12 @@ func (h *Handler) V2ListWatchdogAlerts(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusUnprocessableEntity, CodeInvalidInput, "network must be one of: testnet, mainnet, futurenet, standalone")
 		return
 	}
-	alerts, err := h.Store.ListAlerts(
+	alerts, next, err := h.Store.ListAlerts(
 		r.Context(),
 		chi.URLParam(r, "id"),
 		r.URL.Query().Get("severity"),
 		network,
+		r.URL.Query().Get("cursor"),
 		intQuery(r, "limit", 100),
 	)
 	if err != nil {
@@ -801,7 +802,7 @@ func (h *Handler) V2ListWatchdogAlerts(w http.ResponseWriter, r *http.Request) {
 			Timestamp:  v2Time(a.Timestamp),
 		}
 	}
-	writeJSON(w, http.StatusOK, v2Page(resp, ""))
+	writeJSON(w, http.StatusOK, v2Page(resp, next))
 }
 
 // ---- watchlist --------------------------------------------------------------

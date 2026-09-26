@@ -72,7 +72,8 @@ export default function LivePage() {
 
   const toggleFullscreen = useCallback(async () => {
     const doc = document as WebkitFullscreenDocument;
-    const target = (containerRef.current ?? document.documentElement) as WebkitFullscreenElement;
+    const target = (containerRef.current ??
+      document.documentElement) as WebkitFullscreenElement;
     setPending(true);
     setFullscreenError(null);
     try {
@@ -88,7 +89,7 @@ export default function LivePage() {
       }
     } catch (err) {
       setFullscreenError(
-        err instanceof Error ? err.message : "Could not enter fullscreen",
+        err instanceof Error ? err.message : "Could not enter fullscreen"
       );
     } finally {
       setPending(false);

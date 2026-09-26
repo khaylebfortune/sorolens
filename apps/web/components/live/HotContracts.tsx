@@ -46,7 +46,10 @@ export function HotContracts({ contracts, minutes }: HotContractsProps) {
   const hottest = contracts[0]?.total ?? 0;
 
   return (
-    <ol data-testid="hot-contracts" className="divide-y divide-[var(--color-border)]">
+    <ol
+      data-testid="hot-contracts"
+      className="divide-y divide-[var(--color-border)]"
+    >
       {contracts.map((rate, i) => (
         <li
           key={rate.contract_id}

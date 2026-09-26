@@ -81,9 +81,7 @@ export function EventTicker({ events, newIds }: EventTickerProps) {
             <span className="shrink-0">
               <MonoId value={e.contract_id} headChars={6} tailChars={4} />
             </span>
-            <span className="ml-auto shrink-0 tabular-nums">
-              #{e.ledger}
-            </span>
+            <span className="ml-auto shrink-0 tabular-nums">#{e.ledger}</span>
           </li>
         );
       })}

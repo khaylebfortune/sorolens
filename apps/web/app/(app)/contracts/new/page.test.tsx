@@ -80,7 +80,7 @@ async function advanceToConfigure() {
   await waitFor(() => expect(screen.getByTestId("wizard-valid")).toBeDefined());
   fireEvent.click(screen.getByTestId("wizard-next"));
   await waitFor(() =>
-    expect(screen.getByTestId("wizard-step-configure")).toBeDefined(),
+    expect(screen.getByTestId("wizard-step-configure")).toBeDefined()
   );
 }
 
@@ -121,9 +121,9 @@ describe("Wizard step 1 (identify)", () => {
     fireEvent.change(screen.getByTestId("wizard-contract-id"), {
       target: { value: VALID_ID },
     });
-    expect((screen.getByTestId("wizard-next") as HTMLButtonElement).disabled).toBe(
-      false,
-    );
+    expect(
+      (screen.getByTestId("wizard-next") as HTMLButtonElement).disabled
+    ).toBe(false);
   });
 
   it("shows a format error and keeps Next disabled for a malformed id", () => {
@@ -133,16 +133,16 @@ describe("Wizard step 1 (identify)", () => {
     });
 
     expect(screen.getByTestId("wizard-contract-id-error")).toBeDefined();
-    expect((screen.getByTestId("wizard-next") as HTMLButtonElement).disabled).toBe(
-      true,
-    );
+    expect(
+      (screen.getByTestId("wizard-next") as HTMLButtonElement).disabled
+    ).toBe(true);
   });
 
   it("disables Back on the first step", () => {
     render(<NewContractPage />);
-    expect((screen.getByTestId("wizard-back") as HTMLButtonElement).disabled).toBe(
-      true,
-    );
+    expect(
+      (screen.getByTestId("wizard-back") as HTMLButtonElement).disabled
+    ).toBe(true);
   });
 });
 
@@ -160,38 +160,23 @@ describe("Wizard step 2 (validate)", () => {
       expect(mockValidateContract).toHaveBeenCalledWith({
         contract_id: VALID_ID,
         network: "testnet",
-      }),
+      })
     );
-    await waitFor(() => expect(screen.getByTestId("wizard-valid")).toBeDefined());
-    expect((screen.getByTestId("wizard-next") as HTMLButtonElement).disabled).toBe(
-      false,
+    await waitFor(() =>
+      expect(screen.getByTestId("wizard-valid")).toBeDefined()
     );
+    expect(
+      (screen.getByTestId("wizard-next") as HTMLButtonElement).disabled
+    ).toBe(false);
   });
 
   it("shows the API reason and blocks Next for an invalid contract", async () => {
     mockValidateContract.mockResolvedValue(
       validResponse({
         valid: false,
-        reason: "contract id checksum does not match (check for a mistyped character)",
-      }),
-    );
-
-    render(<NewContractPage />);
-    fireEvent.change(screen.getByTestId("wizard-contract-id"), {
-      target: { value: VALID_ID },
-    });
-    fireEvent.click(screen.getByTestId("wizard-next"));
-
-    await waitFor(() => expect(screen.getByTestId("wizard-invalid")).toBeDefined());
-    expect(screen.getByTestId("wizard-invalid").textContent).toContain("checksum");
-    expect((screen.getByTestId("wizard-next") as HTMLButtonElement).disabled).toBe(
-      true,
-    );
-  });
-
-  it("points at the existing contract when already tracked", async () => {
-    mockValidateContract.mockResolvedValue(
-      validResponse({ already_tracked: true, label: "Escrow DEX" }),
+        reason:
+          "contract id checksum does not match (check for a mistyped character)",
+      })
     );
 
     render(<NewContractPage />);
@@ -201,15 +186,37 @@ describe("Wizard step 2 (validate)", () => {
     fireEvent.click(screen.getByTestId("wizard-next"));
 
     await waitFor(() =>
-      expect(screen.getByTestId("wizard-already-tracked")).toBeDefined(),
+      expect(screen.getByTestId("wizard-invalid")).toBeDefined()
+    );
+    expect(screen.getByTestId("wizard-invalid").textContent).toContain(
+      "checksum"
+    );
+    expect(
+      (screen.getByTestId("wizard-next") as HTMLButtonElement).disabled
+    ).toBe(true);
+  });
+
+  it("points at the existing contract when already tracked", async () => {
+    mockValidateContract.mockResolvedValue(
+      validResponse({ already_tracked: true, label: "Escrow DEX" })
+    );
+
+    render(<NewContractPage />);
+    fireEvent.change(screen.getByTestId("wizard-contract-id"), {
+      target: { value: VALID_ID },
+    });
+    fireEvent.click(screen.getByTestId("wizard-next"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("wizard-already-tracked")).toBeDefined()
     );
     expect(screen.getByTestId("wizard-already-tracked").textContent).toContain(
-      "Escrow DEX",
+      "Escrow DEX"
     );
     // Creating a duplicate is blocked.
-    expect((screen.getByTestId("wizard-next") as HTMLButtonElement).disabled).toBe(
-      true,
-    );
+    expect(
+      (screen.getByTestId("wizard-next") as HTMLButtonElement).disabled
+    ).toBe(true);
   });
 
   it("treats a network failure as a validation failure", async () => {
@@ -221,10 +228,12 @@ describe("Wizard step 2 (validate)", () => {
     });
     fireEvent.click(screen.getByTestId("wizard-next"));
 
-    await waitFor(() => expect(screen.getByTestId("wizard-invalid")).toBeDefined());
-    expect((screen.getByTestId("wizard-next") as HTMLButtonElement).disabled).toBe(
-      true,
+    await waitFor(() =>
+      expect(screen.getByTestId("wizard-invalid")).toBeDefined()
     );
+    expect(
+      (screen.getByTestId("wizard-next") as HTMLButtonElement).disabled
+    ).toBe(true);
   });
 
   it("preserves the contract id when going Back", async () => {
@@ -233,7 +242,9 @@ describe("Wizard step 2 (validate)", () => {
       target: { value: VALID_ID },
     });
     fireEvent.click(screen.getByTestId("wizard-next"));
-    await waitFor(() => expect(screen.getByTestId("wizard-valid")).toBeDefined());
+    await waitFor(() =>
+      expect(screen.getByTestId("wizard-valid")).toBeDefined()
+    );
 
     fireEvent.click(screen.getByTestId("wizard-back"));
 
@@ -257,11 +268,11 @@ describe("Wizard step 3 (configure)", () => {
     await waitFor(() =>
       expect(mockTrackContract).toHaveBeenCalledWith(
         { id: VALID_ID, label: "Escrow DEX", network: "testnet" },
-        "",
-      ),
+        ""
+      )
     );
     await waitFor(() =>
-      expect(push).toHaveBeenCalledWith(`/contracts/${VALID_ID}`),
+      expect(push).toHaveBeenCalledWith(`/contracts/${VALID_ID}`)
     );
   });
 
@@ -273,8 +284,8 @@ describe("Wizard step 3 (configure)", () => {
     await waitFor(() =>
       expect(mockTrackContract).toHaveBeenCalledWith(
         { id: VALID_ID, label: undefined, network: "testnet" },
-        "",
-      ),
+        ""
+      )
     );
   });
 
@@ -290,7 +301,7 @@ describe("Wizard step 3 (configure)", () => {
 
   it("shows the API error and stays on the step when creation fails", async () => {
     mockTrackContract.mockRejectedValue(
-      new ApiError(409, "contract already being tracked"),
+      new ApiError(409, "contract already being tracked")
     );
 
     render(<NewContractPage />);
@@ -299,10 +310,10 @@ describe("Wizard step 3 (configure)", () => {
     fireEvent.click(screen.getByTestId("wizard-create"));
 
     await waitFor(() =>
-      expect(screen.getByTestId("wizard-create-error")).toBeDefined(),
+      expect(screen.getByTestId("wizard-create-error")).toBeDefined()
     );
     expect(screen.getByTestId("wizard-create-error").textContent).toContain(
-      "already being tracked",
+      "already being tracked"
     );
     expect(push).not.toHaveBeenCalled();
   });
@@ -316,8 +327,8 @@ describe("Wizard step 3 (configure)", () => {
     });
 
     expect(screen.getByTestId("wizard-label-error")).toBeDefined();
-    expect((screen.getByTestId("wizard-create") as HTMLButtonElement).disabled).toBe(
-      true,
-    );
+    expect(
+      (screen.getByTestId("wizard-create") as HTMLButtonElement).disabled
+    ).toBe(true);
   });
 });

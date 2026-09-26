@@ -61,7 +61,7 @@ function sortKey(e: ContractEvent): string {
 
 export function useLiveFeed(
   refreshMs: number = REFRESH_MS,
-  minutes: number = ACTIVITY_MINUTES,
+  minutes: number = ACTIVITY_MINUTES
 ): LiveFeed {
   const [events, setEvents] = useState<ContractEvent[]>([]);
   const [contracts, setContracts] = useState<ContractEventRate[]>([]);
@@ -91,7 +91,10 @@ export function useLiveFeed(
       if (fresh.length > 0 && !isFirstLoad.current) {
         setNewIds(new Set(fresh.map((e) => e.id)));
         if (highlightTimer.current) clearTimeout(highlightTimer.current);
-        highlightTimer.current = setTimeout(() => setNewIds(new Set()), NEW_HIGHLIGHT_MS);
+        highlightTimer.current = setTimeout(
+          () => setNewIds(new Set()),
+          NEW_HIGHLIGHT_MS
+        );
       }
       isFirstLoad.current = false;
 

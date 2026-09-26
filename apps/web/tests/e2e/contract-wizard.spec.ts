@@ -12,12 +12,19 @@ test.beforeEach(async ({ page }) => {
   await mockApi(page);
 });
 
-test("the Track contract button now opens the wizard route", async ({ page }) => {
+test("the Track contract button now opens the wizard route", async ({
+  page,
+}) => {
   await page.goto("/contracts");
-  await page.getByRole("link", { name: /track contract/i }).first().click();
+  await page
+    .getByRole("link", { name: /track contract/i })
+    .first()
+    .click();
 
   await expect(page).toHaveURL(/\/contracts\/new$/);
-  await expect(page.getByRole("heading", { name: "Track a contract" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Track a contract" })
+  ).toBeVisible();
   // The old single-field modal is gone.
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
@@ -50,7 +57,9 @@ test("the full wizard flow creates a contract and redirects to its detail page",
   await expect(page).toHaveURL(new RegExp(`/contracts/${CONTRACT_ID}$`));
 });
 
-test("step 1 rejects a malformed contract id and never advances", async ({ page }) => {
+test("step 1 rejects a malformed contract id and never advances", async ({
+  page,
+}) => {
   await page.goto("/contracts/new");
 
   await page.getByTestId("wizard-contract-id").fill("NOT-A-REAL-ID");
@@ -71,7 +80,8 @@ test("step 2 surfaces an invalid contract from the API", async ({ page }) => {
         network: "testnet",
         already_tracked: false,
         label: null,
-        reason: "contract id checksum does not match (check for a mistyped character)",
+        reason:
+          "contract id checksum does not match (check for a mistyped character)",
       },
     }),
   });
@@ -110,7 +120,7 @@ test("step 2 points at the existing contract when it is already tracked", async 
   await expect(tracked).toContainText("Escrow DEX");
   await expect(tracked.getByRole("link")).toHaveAttribute(
     "href",
-    `/contracts/${CONTRACT_ID}`,
+    `/contracts/${CONTRACT_ID}`
   );
   // Creating a duplicate is blocked.
   await expect(page.getByTestId("wizard-next")).toBeDisabled();
@@ -154,7 +164,7 @@ test("a failed creation keeps the user on step 3 and shows the API error", async
   await page.getByTestId("wizard-create").click();
 
   await expect(page.getByTestId("wizard-create-error")).toContainText(
-    "already being tracked",
+    "already being tracked"
   );
   await expect(page).toHaveURL(/\/contracts\/new$/);
 });

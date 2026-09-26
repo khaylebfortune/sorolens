@@ -66,7 +66,9 @@ export default function NewContractPage() {
     label.length > 64 ? "Label must be 64 characters or fewer." : null;
 
   const stepOneValid =
-    trimmedId.length > 0 && !idError && CONCRETE_NETWORKS.includes(network as never);
+    trimmedId.length > 0 &&
+    !idError &&
+    CONCRETE_NETWORKS.includes(network as never);
 
   // ---- step 2: ask the API ---------------------------------------------------
 
@@ -128,7 +130,7 @@ export default function NewContractPage() {
     try {
       await trackContract(
         { id: trimmedId, label: label.trim() || undefined, network },
-        getUserId(),
+        getUserId()
       );
       // Watchdog enrollment is recorded by the on-chain sorolens-watchdog
       // contract, so when the user asked for it we land them on the Watchdog
@@ -138,7 +140,7 @@ export default function NewContractPage() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "An unexpected error occurred while creating the contract.",
+          : "An unexpected error occurred while creating the contract."
       );
       setSubmitting(false);
     }
@@ -160,7 +162,9 @@ export default function NewContractPage() {
         ← Back to contracts
       </Link>
 
-      <h1 className="mt-4 text-2xl font-bold tracking-tight">Track a contract</h1>
+      <h1 className="mt-4 text-2xl font-bold tracking-tight">
+        Track a contract
+      </h1>
       <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
         Three steps: identify the contract, confirm it, then label it.
       </p>
@@ -220,7 +224,9 @@ export default function NewContractPage() {
                 autoComplete="off"
                 spellCheck={false}
                 aria-invalid={idError ? true : undefined}
-                aria-describedby={idError ? "wizard-contract-id-error" : undefined}
+                aria-describedby={
+                  idError ? "wizard-contract-id-error" : undefined
+                }
                 className="mt-1 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-page)] px-3 py-2 font-mono text-sm focus:border-[var(--color-accent)] focus:outline-none"
               />
               {idError && (
@@ -235,7 +241,10 @@ export default function NewContractPage() {
             </div>
 
             <div>
-              <label htmlFor="wizard-network" className="block text-sm font-medium">
+              <label
+                htmlFor="wizard-network"
+                className="block text-sm font-medium"
+              >
                 Network
               </label>
               <select
@@ -262,7 +271,9 @@ export default function NewContractPage() {
             <dl className="text-sm">
               <dt className="text-[var(--color-text-secondary)]">Contract</dt>
               <dd className="break-all font-mono">{trimmedId}</dd>
-              <dt className="mt-3 text-[var(--color-text-secondary)]">Network</dt>
+              <dt className="mt-3 text-[var(--color-text-secondary)]">
+                Network
+              </dt>
               <dd>{network}</dd>
             </dl>
 
@@ -330,8 +341,14 @@ export default function NewContractPage() {
             <h2 className="text-lg font-semibold">Label and monitoring</h2>
 
             <div>
-              <label htmlFor="wizard-label" className="block text-sm font-medium">
-                Label <span className="text-[var(--color-text-secondary)]">(optional)</span>
+              <label
+                htmlFor="wizard-label"
+                className="block text-sm font-medium"
+              >
+                Label{" "}
+                <span className="text-[var(--color-text-secondary)]">
+                  (optional)
+                </span>
               </label>
               <input
                 id="wizard-label"
@@ -364,7 +381,9 @@ export default function NewContractPage() {
                   className="mt-1"
                 />
                 <span>
-                  <span className="font-medium">Enroll in Watchdog monitoring</span>
+                  <span className="font-medium">
+                    Enroll in Watchdog monitoring
+                  </span>
                   <span className="mt-1 block text-xs text-[var(--color-text-secondary)]">
                     Watchdog enrollment is recorded by the on-chain
                     sorolens-watchdog contract. Checking this finishes on the
