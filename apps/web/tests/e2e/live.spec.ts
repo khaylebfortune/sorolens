@@ -48,20 +48,21 @@ test("the ticker gains new events without a page refresh", async ({ page }) => {
     if (frame === page.mainFrame()) navigations++;
   });
 
-  let polls = 0;
+  // Gate the newer event on a flag rather than a poll count: in dev, React
+  // StrictMode mounts effects twice, so the first load can legitimately poll
+  // `events/recent` more than once. Every initial poll returns the same single
+  // event; flipping the flag after the load settles makes the *next* poll the
+  // one that introduces the new event.
+  let showNewEvent = false;
   await mockApi(page, {
-    "events/recent": () => {
-      polls += 1;
-      return {
-        status: 200,
-        body: {
-          events:
-            polls < 2
-              ? [contractEvent()]
-              : [newerContractEvent(), contractEvent()],
-        },
-      };
-    },
+    "events/recent": () => ({
+      status: 200,
+      body: {
+        events: showNewEvent
+          ? [newerContractEvent(), contractEvent()]
+          : [contractEvent()],
+      },
+    }),
   });
 
   await page.goto("/live");
@@ -72,6 +73,8 @@ test("the ticker gains new events without a page refresh", async ({ page }) => {
   // an absolute count would be brittle because the dev server can commit the
   // document more than once during startup.
   const navigationsAfterLoad = navigations;
+
+  showNewEvent = true;
 
   // The feed polls every 5s.
   await expect(page.getByTestId("ticker-row")).toHaveCount(2, {
