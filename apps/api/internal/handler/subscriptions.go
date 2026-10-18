@@ -28,10 +28,6 @@ type subscriptionResponse struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-type subscriptionsResponse struct {
-	Subscriptions []subscriptionResponse `json:"subscriptions"`
-}
-
 // ---- converters -------------------------------------------------------------
 
 func subscriptionFromStore(s store.AlertSubscription) subscriptionResponse {

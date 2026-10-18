@@ -24,12 +24,6 @@ type UserLookup interface {
 	GetUserByGitHubID(ctx context.Context, githubID string) (store.User, error)
 }
 
-// identityFromRequest resolves the calling user from the request. Role
-// enforcement is GitHub-ID based (the credential the dashboard and CLI hold):
-// the X-User-ID header, or a GitHub login in the X-GitHub-Login header, else
-// an API key hash owner lookup via the middleware chain.
-type identityFromRequest func(r *http.Request) (store.User, bool)
-
 // RequireRole returns middleware that denies the request unless the
 // authenticated caller holds at least minRole. It is the RBAC counterpart to
 // RequireScopes; routes that need role enforcement apply it with r.With so

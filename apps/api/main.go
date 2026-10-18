@@ -49,7 +49,7 @@ func main() {
 		os.Exit(1)
 	}
 	redisClient := redis.NewClient(redisOpts)
-	defer redisClient.Close()
+	defer redisClient.Close() //nolint:errcheck // best-effort close on shutdown
 
 	h := &handler.Handler{
 		Store:       store.NewFullStore(pool),

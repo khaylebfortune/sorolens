@@ -1,6 +1,7 @@
 package handler_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +14,7 @@ import (
 func seededWatchdogStore(t *testing.T) *store.MockStore {
 	t.Helper()
 	ms := store.NewMockStore()
-	if err := ms.UpsertMonitoredContract(nil, store.MonitoredContract{
+	if err := ms.UpsertMonitoredContract(context.Background(), store.MonitoredContract{
 		ContractID:    "CONTRACT_A",
 		Name:          "app_v1",
 		Owner:         "GOWNER",
@@ -23,7 +24,7 @@ func seededWatchdogStore(t *testing.T) *store.MockStore {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if err := ms.UpsertMonitoredContract(nil, store.MonitoredContract{
+	if err := ms.UpsertMonitoredContract(context.Background(), store.MonitoredContract{
 		ContractID:    "CONTRACT_B",
 		Name:          "worker",
 		Owner:         "GOWNER",
@@ -33,7 +34,7 @@ func seededWatchdogStore(t *testing.T) *store.MockStore {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if err := ms.InsertContractAlert(nil, store.ContractAlert{
+	if err := ms.InsertContractAlert(context.Background(), store.ContractAlert{
 		ContractID: "CONTRACT_B",
 		Severity:   "Critical",
 		Message:    "queue backing up",
@@ -43,7 +44,7 @@ func seededWatchdogStore(t *testing.T) *store.MockStore {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if err := ms.InsertHealthCheck(nil, store.HealthCheck{
+	if err := ms.InsertHealthCheck(context.Background(), store.HealthCheck{
 		ContractID: "CONTRACT_A",
 		Status:     "Healthy",
 		Ledger:     101,

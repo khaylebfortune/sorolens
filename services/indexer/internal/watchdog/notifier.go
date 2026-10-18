@@ -45,10 +45,10 @@ func DispatchAlerts(ctx context.Context, alert Alert, subStore AlertSubscription
 		}
 		go func(s AlertSubscription) {
 			payload := map[string]any{
-				"contract_id": alert.ContractID,
-				"severity":    alert.Severity,
-				"message":     alert.Message,
-				"timestamp":   alert.Timestamp.Format(time.RFC3339),
+				"contract_id":  alert.ContractID,
+				"severity":     alert.Severity,
+				"message":      alert.Message,
+				"timestamp":    alert.Timestamp.Format(time.RFC3339),
 				"explorer_url": fmt.Sprintf("https://sorobanexplorer.com/transaction/%s", alert.TxHash),
 			}
 			body, err := json.Marshal(payload)
@@ -69,7 +69,7 @@ func DispatchAlerts(ctx context.Context, alert Alert, subStore AlertSubscription
 				logger.Error("dispatch alerts: request failed", "err", err, "subscription_id", s.ID)
 				return
 			}
-			defer resp.Body.Close()
+			defer resp.Body.Close() //nolint:errcheck // best-effort close, body is intentionally unread
 
 			if resp.StatusCode >= 500 {
 				// Retry once on 5xx
@@ -78,7 +78,7 @@ func DispatchAlerts(ctx context.Context, alert Alert, subStore AlertSubscription
 					logger.Error("dispatch alerts: retry failed", "err", err, "subscription_id", s.ID)
 					return
 				}
-				defer resp2.Body.Close()
+				defer resp2.Body.Close() //nolint:errcheck // close is best-effort
 				if resp2.StatusCode >= 500 {
 					logger.Error("dispatch alerts: retry also failed", "status", resp2.StatusCode, "subscription_id", s.ID)
 				}
