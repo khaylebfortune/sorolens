@@ -1,5 +1,6 @@
 /**
- * SQLite-backed mapping between Discord user ids and GitHub usernames.
+ * SQLite-backed mapping between Discord user ids and GitHub usernames, plus
+ * the per-user Sorolens API keys minted when a contributor links.
  *
  * The database is a single file so operators can copy it between
  * deployments without a heavier data layer. Two contributors can not
@@ -17,6 +18,14 @@ export interface Link {
   linkedAt: string;
 }
 
+/** Per-user Sorolens API key persisted for a linked contributor. */
+export interface UserApiKey {
+  discordId: string;
+  key: string;
+  keyId: string | null;
+  createdAt: string;
+}
+
 let db: Database.Database | null = null;
 
 export function openDb(path: string): Database.Database {
@@ -28,6 +37,13 @@ export function openDb(path: string): Database.Database {
       discord_id   TEXT PRIMARY KEY,
       github_login TEXT NOT NULL UNIQUE COLLATE NOCASE,
       linked_at    TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS user_api_keys (
+      discord_id TEXT PRIMARY KEY,
+      api_key    TEXT NOT NULL,
+      key_id     TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
   db = conn;
@@ -43,11 +59,13 @@ export function requireDb(): Database.Database {
 export function upsertLink(discordId: string, githubLogin: string): Link {
   const conn = requireDb();
   const existing = conn
-    .prepare("SELECT discord_id FROM links WHERE github_login = ? COLLATE NOCASE")
+    .prepare(
+      "SELECT discord_id FROM links WHERE github_login = ? COLLATE NOCASE"
+    )
     .get(githubLogin) as { discord_id: string } | undefined;
   if (existing && existing.discord_id !== discordId) {
     throw new Error(
-      `github login "${githubLogin}" is already linked to a different Discord user`,
+      `github login "${githubLogin}" is already linked to a different Discord user`
     );
   }
   conn
@@ -55,7 +73,7 @@ export function upsertLink(discordId: string, githubLogin: string): Link {
       `INSERT INTO links (discord_id, github_login) VALUES (?, ?)
        ON CONFLICT(discord_id) DO UPDATE SET
          github_login = excluded.github_login,
-         linked_at    = datetime('now')`,
+         linked_at    = datetime('now')`
     )
     .run(discordId, githubLogin);
   return getByDiscord(discordId)!;
@@ -63,7 +81,12 @@ export function upsertLink(discordId: string, githubLogin: string): Link {
 
 export function unlink(discordId: string): boolean {
   const conn = requireDb();
-  const r = conn.prepare("DELETE FROM links WHERE discord_id = ?").run(discordId);
+  const r = conn
+    .prepare("DELETE FROM links WHERE discord_id = ?")
+    .run(discordId);
+  // The API key is useless without the link, and leaving it around would let
+  // a re-linked account keep the previous owner's credential.
+  conn.prepare("DELETE FROM user_api_keys WHERE discord_id = ?").run(discordId);
   return r.changes > 0;
 }
 
@@ -71,7 +94,7 @@ export function getByDiscord(discordId: string): Link | null {
   const conn = requireDb();
   const row = conn
     .prepare(
-      "SELECT discord_id AS discordId, github_login AS githubLogin, linked_at AS linkedAt FROM links WHERE discord_id = ?",
+      "SELECT discord_id AS discordId, github_login AS githubLogin, linked_at AS linkedAt FROM links WHERE discord_id = ?"
     )
     .get(discordId) as Link | undefined;
   return row ?? null;
@@ -81,8 +104,67 @@ export function getByGithub(githubLogin: string): Link | null {
   const conn = requireDb();
   const row = conn
     .prepare(
-      "SELECT discord_id AS discordId, github_login AS githubLogin, linked_at AS linkedAt FROM links WHERE github_login = ? COLLATE NOCASE",
+      "SELECT discord_id AS discordId, github_login AS githubLogin, linked_at AS linkedAt FROM links WHERE github_login = ? COLLATE NOCASE"
     )
     .get(githubLogin) as Link | undefined;
   return row ?? null;
 }
+
+export function listLinks(limit = 100, offset = 0): Link[] {
+  const conn = requireDb();
+  return conn
+    .prepare(
+      "SELECT discord_id AS discordId, github_login AS githubLogin, linked_at AS linkedAt FROM links ORDER BY linked_at DESC LIMIT ? OFFSET ?"
+    )
+    .all(limit, offset) as Link[];
+}
+
+// ---- per-user Sorolens API keys -------------------------------------------
+
+/** Create or replace the Sorolens API key stored for a Discord user. */
+export function setApiKey(
+  discordId: string,
+  key: string,
+  keyId: string | null = null
+): UserApiKey {
+  const conn = requireDb();
+  conn
+    .prepare(
+      `INSERT INTO user_api_keys (discord_id, api_key, key_id) VALUES (?, ?, ?)
+       ON CONFLICT(discord_id) DO UPDATE SET
+         api_key    = excluded.api_key,
+         key_id     = excluded.key_id,
+         created_at = datetime('now')`
+    )
+    .run(discordId, key, keyId);
+  return getApiKey(discordId)!;
+}
+
+export function getApiKey(discordId: string): UserApiKey | null {
+  const conn = requireDb();
+  const row = conn
+    .prepare(
+      "SELECT discord_id AS discordId, api_key AS key, key_id AS keyId, created_at AS createdAt FROM user_api_keys WHERE discord_id = ?"
+    )
+    .get(discordId) as UserApiKey | undefined;
+  return row ?? null;
+}
+
+export function clearApiKey(discordId: string): boolean {
+  const conn = requireDb();
+  const r = conn
+    .prepare("DELETE FROM user_api_keys WHERE discord_id = ?")
+    .run(discordId);
+  return r.changes > 0;
+}
+
+/**
+ * Adapter surface consumed by `apikey.ts`, so provisioning code can be tested
+ * against an in-memory implementation.
+ */
+export const apiKeyStore = {
+  get: getApiKey,
+  set: (discordId: string, key: string, keyId: string | null) =>
+    setApiKey(discordId, key, keyId),
+  clear: clearApiKey,
+};

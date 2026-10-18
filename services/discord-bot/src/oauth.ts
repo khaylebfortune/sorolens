@@ -22,8 +22,10 @@
 import crypto from "node:crypto";
 import type { Client } from "discord.js";
 import type { Application, Request, Response } from "express";
-import { upsertLink } from "./db.js";
+import { apiKeyStore, upsertLink } from "./db.js";
 import { syncOnMerge } from "./commands.js";
+import { SorolensApi } from "./api.js";
+import { ensureUserApiKey } from "./apikey.js";
 import type { Tiers } from "./roles.js";
 import type { Config } from "./config.js";
 
@@ -65,7 +67,7 @@ function signState(discordId: string, secret: string): string {
 
 function verifyState(
   state: string,
-  secret: string,
+  secret: string
 ): { discordId: string; ts: number } | null {
   try {
     const decoded = Buffer.from(state, "base64url").toString("utf8");
@@ -106,7 +108,7 @@ function githubAuthorizeUrl(discordId: string, config: Config): string {
 
 async function exchangeCodeForToken(
   code: string,
-  config: Config,
+  config: Config
 ): Promise<string> {
   const r = await fetch("https://github.com/login/oauth/access_token", {
     method: "POST",
@@ -123,7 +125,9 @@ async function exchangeCodeForToken(
   if (!r.ok) throw new Error(`github token exchange returned ${r.status}`);
   const body = (await r.json()) as { access_token?: string; error?: string };
   if (!body.access_token) {
-    throw new Error(`github token exchange: ${body.error ?? "no access_token"}`);
+    throw new Error(
+      `github token exchange: ${body.error ?? "no access_token"}`
+    );
   }
   return body.access_token;
 }
@@ -165,7 +169,11 @@ export function mountOauthRoutes(app: Application, deps: OauthDeps): void {
     if (!parsed) {
       return res
         .status(400)
-        .send(errorPage("Invalid or expired link. Run /connect in Discord to get a fresh one."));
+        .send(
+          errorPage(
+            "Invalid or expired link. Run /connect in Discord to get a fresh one."
+          )
+        );
     }
 
     let login: string;
@@ -176,7 +184,11 @@ export function mountOauthRoutes(app: Application, deps: OauthDeps): void {
       console.error("oauth callback: token/user fetch failed", err);
       return res
         .status(502)
-        .send(errorPage("GitHub did not return your identity. Try again in a minute."));
+        .send(
+          errorPage(
+            "GitHub did not return your identity. Try again in a minute."
+          )
+        );
     }
 
     try {
@@ -187,6 +199,30 @@ export function mountOauthRoutes(app: Application, deps: OauthDeps): void {
           ? err.message
           : "This GitHub account is already linked to another Discord user.";
       return res.status(409).send(errorPage(msg));
+    }
+
+    // Mint (or reuse) the contributor's own Sorolens API key so the
+    // /status, /alerts, /watch and /unwatch commands run under their
+    // identity. Best effort - the link is what gates access.
+    try {
+      const api = new SorolensApi({
+        baseUrl: deps.config.sorolensApiBaseUrl,
+        apiKey: deps.config.sorolensAdminApiKey,
+      });
+      const granted = await ensureUserApiKey(
+        apiKeyStore,
+        api,
+        parsed.discordId,
+        login
+      );
+      if (!granted) {
+        console.warn(
+          "oauth: per-user API key not provisioned for",
+          parsed.discordId
+        );
+      }
+    } catch (err) {
+      console.warn("oauth: API key provisioning failed", err);
     }
 
     try {
@@ -225,7 +261,7 @@ function successPage(login: string): string {
     `<h1>You're linked ✓</h1>
      <p>Discord is now connected to GitHub <strong>@${escapeHtml(login)}</strong>.</p>
      <p>Your <strong>Contributor</strong> or <strong>Core Contributor</strong> role updates automatically as PRs get merged in <code>sorolens/sorolens</code>.</p>
-     <p>You can close this tab and head back to Discord.</p>`,
+     <p>You can close this tab and head back to Discord.</p>`
   );
 }
 
@@ -234,7 +270,7 @@ function errorPage(message: string): string {
     "Link failed",
     `<h1>Link failed</h1>
      <p>${escapeHtml(message)}</p>
-     <p>Run <code>/connect</code> in the Sorolens Discord to get a fresh link.</p>`,
+     <p>Run <code>/connect</code> in the Sorolens Discord to get a fresh link.</p>`
   );
 }
 
@@ -271,6 +307,6 @@ function escapeHtml(s: string): string {
           ? "&gt;"
           : c === '"'
             ? "&quot;"
-            : "&#39;",
+            : "&#39;"
   );
 }

@@ -18,6 +18,9 @@ const cfg: Config = {
   githubOauthClientSecret: "gh_secret",
   oauthStateSecret: "super-secret-do-not-guess",
   publicBaseUrl: "https://sorolens.onrender.com",
+  sorolensApiBaseUrl: "https://api.sorolens.dev",
+  sorolensAdminApiKey: "",
+  commandRateLimitPerMinute: 10,
   port: 8080,
   dbPath: "/tmp/x.db",
 };
@@ -27,7 +30,7 @@ describe("oauth start URL", () => {
     const url = buildConnectUrl("1111", cfg);
     const expected = signDiscordId("1111", cfg.oauthStateSecret);
     expect(url).toBe(
-      `https://sorolens.onrender.com/oauth/start?discord_id=1111&sig=${expected}`,
+      `https://sorolens.onrender.com/oauth/start?discord_id=1111&sig=${expected}`
     );
   });
 
